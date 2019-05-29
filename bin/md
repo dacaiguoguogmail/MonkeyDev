@@ -13,8 +13,9 @@ export activeActionArg
 export MonkeyDevPath="/opt/MonkeyDev"
 #默认设备ip
 export DefaultDeviceIP="localhost"
+export MonkeyDevDevicePassword='pppp'
 #默认端口号
-export DefaultDevicePort="22"
+export DefaultDevicePort="2233"
 
 export userName="${SUDO_USER-$USER}"
 export userGroup=`id -g $userName`
@@ -241,7 +242,9 @@ function copyFileToDevice() # args: sourceFile, targetDir, hostAddress, hostPort
 		
 	runCmdOnDevice "ssh -p$hostPort root@$hostAddress rm -f \"$targetFilePath\"" "Failed to remove existing file $targetFilePath on device $hostAddress"
 	
-	runCmdOnDevice "scp -P$hostPort \"$sourceFile\" root@$hostAddress:\"$targetFilePath\"" "Failed to copy file $sourceFile to device $hostAddress at directory $targetDir"
+#	runCmdOnDevice "scp -P$hostPort \"$sourceFile\" root@$hostAddress:\"$targetFilePath\"" "Failed to copy file $sourceFile to device $hostAddress at directory $targetDir"
+
+	runCmdOnDevice "rsync -avz -e \"ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p $hostPort\" --progress  \"$sourceFile\" root@$hostAddress:\"$targetFilePath\"" "Failed to copy file $sourceFile to device $hostAddress at directory $targetDir"
 }
 
 function getBashProfileEnvVarValue() # args: envVarName
