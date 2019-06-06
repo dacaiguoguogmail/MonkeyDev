@@ -11,12 +11,6 @@ export originalArguments=("$@")
 export activeActionArg
 
 export MonkeyDevPath="/opt/MonkeyDev"
-#默认设备ip
-export DefaultDeviceIP="localhost"
-export MonkeyDevDevicePassword='pppp'
-#默认端口号
-export DefaultDevicePort="2233"
-
 export userName="${SUDO_USER-$USER}"
 export userGroup=`id -g $userName`
 export userHome=`eval echo ~$userName`
@@ -234,17 +228,20 @@ function copyFileToDevice() # args: sourceFile, targetDir, hostAddress, hostPort
 	local hostAddress="$3"
 	local hostPort="$4"
 	local targetFilePath
-
+	
 	runCmdOnDevice "ssh -p$hostPort root@$hostAddress mkdir -p \"$targetDir\"" "Failed to create directory $targetDir on device $hostAddress"
 	
 	targetFilePath="$targetDir/`basename \"$sourceFile\"`" || \
 		panic $? "Failed to build target file path"
-		
+	echo $targetFilePath
 	runCmdOnDevice "ssh -p$hostPort root@$hostAddress rm -f \"$targetFilePath\"" "Failed to remove existing file $targetFilePath on device $hostAddress"
 	
-#	runCmdOnDevice "scp -P$hostPort \"$sourceFile\" root@$hostAddress:\"$targetFilePath\"" "Failed to copy file $sourceFile to device $hostAddress at directory $targetDir"
+    if [[ "$MonkeyCopyUseScp" == "YES" ]]; then
+      runCmdOnDevice "scp -P$hostPort \"$sourceFile\" root@$hostAddress:\"$targetFilePath\"" "Failed to copy file $sourceFile to device $hostAddress at directory $targetDir"
+    else
+      runCmdOnDevice "rsync -avz -e \"ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p $hostPort\" --progress  \"$sourceFile\" root@$hostAddress:\"$targetFilePath\"" "Failed to copy file $sourceFile to device $hostAddress at directory $targetDir"
+    fi
 
-	runCmdOnDevice "rsync -avz -e \"ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p $hostPort\" --progress  \"$sourceFile\" root@$hostAddress:\"$targetFilePath\"" "Failed to copy file $sourceFile to device $hostAddress at directory $targetDir"
 }
 
 function getBashProfileEnvVarValue() # args: envVarName
